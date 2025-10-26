@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Flow",
+  "description": "A web application that uses the Gemini API to estimate location busyness and displays live heatmaps for university study spots.",
+  "requestFramePermissions": []
+}
