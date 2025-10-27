@@ -1,0 +1,7 @@
+# Git Filter-Repo Replace File
+# This file maps exposed secrets to replacement markers
+# Format: literal:OLD_VALUE==>NEW_VALUE
+
+# Leaked Gemini API Keys (from git history)
+literal:AIzaSyATr0wA5k99oWYUL0Ifu6BDZiEMS0plMOw==>GEMINI_KEY_REMOVED_1
+literal:AIzaSyCRGNQgexiMHTn3LNHn2OJGd574aqU_Dik==>GEMINI_KEY_REMOVED_2

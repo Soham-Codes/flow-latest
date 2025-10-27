@@ -8,13 +8,14 @@ import { GOOGLE_MAPS_API_KEY } from "../config";
 const YOUR_DATASET_FILE = "/users.csv"; // e.g., 'users.csv'
 
 // A small sample dataset to use as a fallback if your file isn't found.
+// Note: This data uses anonymized/placeholder values for privacy.
 const FALLBACK_CSV_DATA = `Userid,Name,Email,Status,"Last seen location (latitude, longitude)",Time of day,Day of the week,Month,Weather,Academic calendar events,Building
-user1,John Doe,jd@osu.edu,active,"39.9992, -83.0149",10:00,Monday,April,Sunny,Finals,Thompson Library
-user2,Jane Smith,js@osu.edu,idle,"39.9993, -83.0150",10:05,Monday,April,Sunny,Finals,Thompson Library
-user3,Sam Ray,sr@osu.edu,active,"39.9991, -83.0148",10:07,Monday,April,Sunny,Finals,Thompson Library
-user4,Lisa Ray,lr@osu.edu,active,"40.00167, -83.01337",11:00,Monday,April,Sunny,Finals,18th Avenue Library
-user5,Mike P,mp@osu.edu,idle,"40.00170, -83.01340",11:02,Monday,April,Sunny,Finals,18th Avenue Library
-user6,Pat Q,pq@osu.edu,active,"39.9977, -83.0086",12:00,Monday,April,Sunny,Finals,Ohio Union
+user1,Student A,user1@example.invalid,active,"39.9992, -83.0149",10:00,Monday,April,Sunny,Finals,Thompson Library
+user2,Student B,user2@example.invalid,idle,"39.9993, -83.0150",10:05,Monday,April,Sunny,Finals,Thompson Library
+user3,Student C,user3@example.invalid,active,"39.9991, -83.0148",10:07,Monday,April,Sunny,Finals,Thompson Library
+user4,Student D,user4@example.invalid,active,"40.00167, -83.01337",11:00,Monday,April,Sunny,Finals,18th Avenue Library
+user5,Student E,user5@example.invalid,idle,"40.00170, -83.01340",11:02,Monday,April,Sunny,Finals,18th Avenue Library
+user6,Student F,user6@example.invalid,active,"39.9977, -83.0086",12:00,Monday,April,Sunny,Finals,Ohio Union
 `;
 
 const studyLocations = [

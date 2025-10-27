@@ -1,0 +1,84 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+# 
+# Installation:
+#   pip install pre-commit
+#   pre-commit install
+# 
+# Usage:
+#   pre-commit run --all-files  # Run on all files
+#   pre-commit run              # Run on staged files
+# 
+# To update hooks to latest versions:
+#   pre-commit autoupdate
+
+repos:
+  # Secret detection
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+        exclude: |
+          (?x)^(
+            package-lock\.json|
+            \.secrets\.baseline|
+            \.git/.*
+          )$
+  
+  # General pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      # Prevent commits to main/master
+      - id: no-commit-to-branch
+        args: ['--branch', 'main', '--branch', 'master']
+      
+      # File checks
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-json
+      - id: check-toml
+      
+      # Code quality
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: mixed-line-ending
+        args: ['--fix=lf']
+      
+      # Security
+      - id: detect-private-key
+      - id: detect-aws-credentials
+        args: ['--allow-missing-credentials']
+  
+  # TypeScript/JavaScript linting
+  - repo: local
+    hooks:
+      - id: typescript-check
+        name: TypeScript type checking
+        entry: npx tsc --noEmit
+        language: system
+        types: [ts, tsx]
+        pass_filenames: false
+        
+      - id: no-console-log
+        name: Check for console.log
+        entry: bash -c 'if git diff --cached --name-only | grep -E "\.(ts|tsx|js|jsx)$" | xargs grep -n "console\.log" 2>/dev/null; then echo "Error: console.log found in staged files"; exit 1; fi'
+        language: system
+        pass_filenames: false
+        
+      - id: check-api-keys
+        name: Check for hardcoded API keys
+        entry: bash -c 'if git diff --cached | grep -E "AIzaSy[a-zA-Z0-9_-]{35}"; then echo "Error: Google API key detected in diff!"; exit 1; fi'
+        language: system
+        pass_filenames: false
+
+# To generate initial secrets baseline, run:
+#   detect-secrets scan --exclude-files '\.git/.*' --exclude-files '\.secrets\.baseline' --exclude-files 'package-lock\.json' --exclude-files 'node_modules/.*' > .secrets.baseline
+# 
+# Then audit it:
+#   detect-secrets audit .secrets.baseline

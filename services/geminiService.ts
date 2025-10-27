@@ -1,33 +1,21 @@
-import { GoogleGenAI, Type } from "@google/genai";
-import { PredictionResult } from '../types';
-import { GEMINI_API_KEY } from '../config';
-
-// ⚠️ SECURITY WARNING ⚠️
-// The Gemini API key is being used in client-side code (browser).
-// This is NOT recommended for production as the key is exposed in the browser bundle.
+// ⚠️ IMPORTANT: This service now uses a server-side proxy ⚠️
+// The Gemini API is called through /api/gemini-proxy to protect the API key.
+// The API key is stored server-side as an environment variable (GEMINI_API_KEY).
 // 
-// RECOMMENDED: Move Gemini API calls to a backend service or serverless function
-// to protect your API key and prevent unauthorized usage.
-//
-// For development only, we check if the key is present:
-if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-  console.warn("Gemini API key is missing. Please add it to your .env.local file as VITE_GEMINI_API_KEY");
-}
+// DO NOT import GoogleGenAI or any server-side packages here - this runs in the browser.
+// All Gemini API calls are now proxied through the backend.
 
-// Check if running in browser and warn about client-side API key usage (only once)
-let hasWarnedAboutClientSideKey = false;
-if (typeof window !== 'undefined' && GEMINI_API_KEY && !hasWarnedAboutClientSideKey) {
-  hasWarnedAboutClientSideKey = true;
-  console.warn(
-    "⚠️ SECURITY WARNING: Gemini API key is being used in the browser. " +
-    "For production, move API calls to a backend service to protect your key."
-  );
-}
+import { Type } from "@google/genai";
+import { PredictionResult } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+// Use environment variable for proxy endpoint URL (defaults to /api/gemini-proxy for local/serverless)
+const GEMINI_PROXY_ENDPOINT = import.meta.env.VITE_GEMINI_PROXY_ENDPOINT || '/api/gemini-proxy';
 
 /**
- * Fetches a busyness prediction from the Gemini API.
+ * Fetches a busyness prediction from the Gemini API via the server-side proxy.
+ * 
+ * This function calls /api/gemini-proxy which handles the actual Gemini API call server-side.
+ * The API key is protected and never exposed to the browser.
  * 
  * @param location - The name of the place.
  * @param day - The day of the week.
@@ -39,10 +27,6 @@ export const fetchBusynessPrediction = async (
   day: string,
   time: string
 ): Promise<PredictionResult> => {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
-    throw new Error("Gemini API key not configured. Please check your config.ts file.");
-  }
-
   try {
     const prompt = `
       Estimate the busyness of "${location}" on a typical ${day} at around ${time}.
@@ -56,54 +40,72 @@ export const fetchBusynessPrediction = async (
       - If the location is predicted to be 'moderately busy' or busier (busyness level >= 40), suggest 2-3 alternative quiet nearby places suitable for studying. For each suggestion, provide its name and a brief reason why it's a good alternative. If the location is not busy (busyness level < 40), this "alternativeSuggestions" field should be an empty array.
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            busynessLevel: {
-              type: Type.INTEGER,
-              description: "A percentage value from 0 to 100 representing how busy the location is."
-            },
-            description: {
-              type: Type.STRING,
-              description: "A short text description of the busyness level, like 'Not busy', 'Moderately busy', etc."
-            },
-            rationale: {
-              type: Type.STRING,
-              description: "A brief explanation for the predicted busyness level."
-            },
-            isOpen: {
-              type: Type.BOOLEAN,
-              description: "A boolean indicating if the location is likely open (true) or closed (false)."
-            },
-            statusReason: {
-              type: Type.STRING,
-              description: "A brief reason for the open/closed status."
-            },
-            alternativeSuggestions: {
-              type: Type.ARRAY,
-              description: "A list of alternative quiet nearby places for studying. Empty if the location is not busy.",
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  name: { type: Type.STRING, description: "The name of the alternative location." },
-                  reason: { type: Type.STRING, description: "A brief reason why this is a good alternative." }
-                },
-                required: ["name", "reason"]
-              }
-            }
-          },
-          required: ["busynessLevel", "description", "rationale", "isOpen", "statusReason", "alternativeSuggestions"],
+    // Define the response schema for structured output
+    const responseSchema = {
+      type: Type.OBJECT,
+      properties: {
+        busynessLevel: {
+          type: Type.INTEGER,
+          description: "A percentage value from 0 to 100 representing how busy the location is."
         },
+        description: {
+          type: Type.STRING,
+          description: "A short text description of the busyness level, like 'Not busy', 'Moderately busy', etc."
+        },
+        rationale: {
+          type: Type.STRING,
+          description: "A brief explanation for the predicted busyness level."
+        },
+        isOpen: {
+          type: Type.BOOLEAN,
+          description: "A boolean indicating if the location is likely open (true) or closed (false)."
+        },
+        statusReason: {
+          type: Type.STRING,
+          description: "A brief reason for the open/closed status."
+        },
+        alternativeSuggestions: {
+          type: Type.ARRAY,
+          description: "A list of alternative quiet nearby places for studying. Empty if the location is not busy.",
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING, description: "The name of the alternative location." },
+              reason: { type: Type.STRING, description: "A brief reason why this is a good alternative." }
+            },
+            required: ["name", "reason"]
+          }
+        }
       },
+      required: ["busynessLevel", "description", "rationale", "isOpen", "statusReason", "alternativeSuggestions"],
+    };
+
+    // Call the server-side proxy endpoint
+    const response = await fetch(GEMINI_PROXY_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt,
+        model: 'gemini-2.5-flash',
+        responseSchema,
+      }),
     });
 
-    const jsonString = response.text.trim();
-    const result: PredictionResult = JSON.parse(jsonString);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.text) {
+      throw new Error('Invalid response from proxy server');
+    }
+
+    // Parse the JSON response from Gemini
+    const result: PredictionResult = JSON.parse(data.text.trim());
 
     // Basic validation
     if (typeof result.busynessLevel !== 'number' || result.busynessLevel < 0 || result.busynessLevel > 100) {

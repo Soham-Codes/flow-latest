@@ -39,7 +39,82 @@ View your app in AI Studio: https://ai.studio/apps/drive/1pP1L-WDva9o6PzVMX90aRC
 
 - **Never commit API keys** to version control. Always use `.env.local` for local development.
 - **Restrict your Google Maps API key** by HTTP referrer (domain) in the [Google Cloud Console](https://console.cloud.google.com/apis/credentials).
-- **For production:** Move Gemini API calls to a backend service or serverless function to avoid exposing the API key in the browser.
+- **For production:** Use the server-side Gemini proxy (see below) to avoid exposing API keys in the browser.
+
+### 🛡️ Server-Side Gemini Proxy (RECOMMENDED)
+
+This project now includes a server-side proxy for Gemini API calls to protect your API key:
+
+**Serverless Deployment (Vercel/Netlify):**
+
+1. Deploy the `/api/gemini-proxy.ts` function to your serverless platform
+2. Set the `GEMINI_API_KEY` environment variable in your platform's dashboard:
+   - **Vercel**: Project Settings → Environment Variables
+   - **Netlify**: Site Settings → Environment Variables
+3. The client will automatically use `/api/gemini-proxy` endpoint
+
+**Environment Variables for Production:**
+```bash
+# Server-side only (never in browser)
+GEMINI_API_KEY=your_actual_gemini_key_here
+
+# Optional: Custom proxy endpoint
+VITE_GEMINI_PROXY_ENDPOINT=/api/gemini-proxy
+```
+
+### 🚨 URGENT: Secret Remediation Steps
+
+**⚠️ If you have cloned this repository before the security fixes, two Gemini API keys were exposed in git history.**
+
+**Required Actions:**
+
+1. **Revoke the exposed keys immediately:**
+   - Go to [Google AI Studio](https://aistudio.google.com/apikey)
+   - Delete any keys that match:
+     - `AIzaSyATr0wA5k99oWYUL0Ifu6BDZiEMS0plMOw`
+     - `AIzaSyCRGNQgexiMHTn3LNHn2OJGd574aqU_Dik`
+
+2. **Generate new API keys:**
+   - Create a new Gemini API key at [Google AI Studio](https://aistudio.google.com/apikey)
+   - Add it to your `.env.local` file (never commit this file!)
+
+3. **Run the secret purge script** (for repository maintainers):
+   ```bash
+   # Install git-filter-repo first
+   pip install git-filter-repo
+   
+   # Run the purge script
+   ./tools/remove-secrets/purge-history.sh
+   ```
+   
+   See [`tools/remove-secrets/README.md`](tools/remove-secrets/README.md) for detailed instructions.
+
+4. **After history rewrite** (all collaborators):
+   - Delete your local repository
+   - Re-clone from GitHub
+   - Recreate any local branches
+
+### 🔍 Automated Secret Scanning
+
+This repository includes automated security scanning:
+
+- **GitHub Actions**: Runs on every PR and push to main
+  - Secret scanning with `detect-secrets`
+  - Dependency vulnerability scanning with `npm audit`
+  - TypeScript type checking
+  
+- **Pre-commit hooks**: Prevent secrets from being committed
+  ```bash
+  # Install pre-commit
+  pip install pre-commit
+  
+  # Set up hooks
+  pre-commit install
+  
+  # Generate secrets baseline (first time only)
+  detect-secrets scan --exclude-files '\.git/.*' --exclude-files 'package-lock\.json' --exclude-files 'node_modules/.*' > .secrets.baseline
+  detect-secrets audit .secrets.baseline
+  ```
 
 ### 🔑 If Your Keys Have Been Leaked
 
@@ -49,18 +124,14 @@ If API keys were accidentally committed to Git:
    - **Gemini API Key:** Go to [Google AI Studio](https://aistudio.google.com/apikey) and delete the exposed key
    - **Google Maps API Key:** Go to [Google Cloud Console](https://console.cloud.google.com/apis/credentials) and regenerate or delete the key
 
-2. **Generate new keys** and add them to your `.env.local` file
+2. **Generate new keys** and add them to your `.env.local` file (server-side keys in platform env vars)
 
 3. **Add restrictions:**
    - For Google Maps: Add HTTP referrer restrictions (e.g., `yourdomain.com/*`)
-   - For Gemini: Consider using it server-side only or add application restrictions
+   - For Gemini: Use server-side proxy only (set `GEMINI_API_KEY` in serverless platform)
 
-4. **Review Git history:** The leaked keys will remain in Git history. Consider using tools like [BFG Repo-Cleaner](https://rtyley.github.io/bfg-repo-cleaner/) or `git filter-branch` to remove them from history if needed.
-
-### ⚠️ Client-Side API Key Warning
-
-The Gemini API key is currently used in client-side code, which means it's exposed in the browser. For production applications, we strongly recommend:
-
-1. Creating a backend API endpoint that calls Gemini
-2. Having your frontend call your backend instead of calling Gemini directly
-3. This protects your API key and gives you better control over usage and costs
+4. **Clean Git history:** Use the provided purge script to remove secrets from history:
+   ```bash
+   ./tools/remove-secrets/purge-history.sh
+   ```
+   See [`tools/remove-secrets/README.md`](tools/remove-secrets/README.md) for full instructions.
