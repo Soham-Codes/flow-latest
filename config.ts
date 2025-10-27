@@ -1,23 +1,33 @@
 // config.ts
 
-// --- IMPORTANT ---
-// This file is for your local API keys.
-// 1. Fill in your actual API keys in the placeholders below.
-// 2. DO NOT commit this file to public version control (e.g., add it to your .gitignore).
+// --- SECURITY WARNING ---
+// API keys should NEVER be hardcoded or committed to version control.
+// This file reads keys from environment variables set in .env.local (not committed).
+//
+// IMPORTANT: For production, the Gemini API key should be used server-side only.
+// Exposing API keys in client-side code (browser) is a security risk.
+// Consider moving Gemini API calls to a backend service/serverless function.
 
 /**
  * Your Google Gemini API Key.
- * Get yours from Google AI Studio.
+ * Get yours from Google AI Studio: https://aistudio.google.com/apikey
+ * 
+ * Set this in your .env.local file as: VITE_GEMINI_API_KEY=your_key_here
+ * 
+ * WARNING: This key is exposed in the browser bundle. For production,
+ * move Gemini API calls to a server-side function to protect your key.
  */
-export const GEMINI_API_KEY: string = "AIzaSyATr0wA5k99oWYUL0Ifu6BDZiEMS0plMOw";
+export const GEMINI_API_KEY: string = 
+  (import.meta.env.VITE_GEMINI_API_KEY as string) || "";
 
 /**
  * Your Google Maps Platform API Key.
- * Get yours from the Google Cloud Console. Make sure the "Maps JavaScript API"
- * and "Maps Visualization Library" are enabled for your key.
+ * Get yours from the Google Cloud Console: https://console.cloud.google.com/
+ * Make sure the "Maps JavaScript API" and "Maps Visualization Library" are enabled.
+ * 
+ * Set this in your .env.local file as: VITE_GOOGLE_MAPS_API_KEY=your_key_here
+ * 
+ * Restrict this key by HTTP referrer (domain) in the Google Cloud Console.
  */
-// Prefer Vite-provided env var (VITE_GOOGLE_MAPS_API_KEY). Fall back to the
-// value in .env.local for convenience during local development.
 export const GOOGLE_MAPS_API_KEY: string =
-  (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) ||
-  "AIzaSyCRGNQgexiMHTn3LNHn2OJGd574aqU_Dik";
+  (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string) || "";
