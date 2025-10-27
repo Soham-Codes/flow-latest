@@ -9,7 +9,7 @@ import { Type } from "@google/genai";
 import { PredictionResult } from '../types';
 
 // Use environment variable for proxy endpoint URL (defaults to /api/gemini-proxy for local/serverless)
-const GEMINI_PROXY_ENDPOINT = import.meta.env.VITE_GEMINI_PROXY_ENDPOINT || '/api/gemini-proxy';
+const GEMINI_PROXY_ENDPOINT: string = (import.meta.env.VITE_GEMINI_PROXY_ENDPOINT as string) || '/api/gemini-proxy';
 
 /**
  * Fetches a busyness prediction from the Gemini API via the server-side proxy.
