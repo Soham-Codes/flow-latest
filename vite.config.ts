@@ -13,12 +13,7 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [react()],
-      // Only define these if you need to support legacy process.env access.
-      // Prefer using import.meta.env.VITE_* directly in your code.
-      define: {
-        'process.env.API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY)
-      },
+      // Note: No need to define process.env variables since we use import.meta.env.VITE_* directly
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

@@ -14,8 +14,10 @@ if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE") {
   console.warn("Gemini API key is missing. Please add it to your .env.local file as VITE_GEMINI_API_KEY");
 }
 
-// Check if running in browser and warn about client-side API key usage
-if (typeof window !== 'undefined' && GEMINI_API_KEY) {
+// Check if running in browser and warn about client-side API key usage (only once)
+let hasWarnedAboutClientSideKey = false;
+if (typeof window !== 'undefined' && GEMINI_API_KEY && !hasWarnedAboutClientSideKey) {
+  hasWarnedAboutClientSideKey = true;
   console.warn(
     "⚠️ SECURITY WARNING: Gemini API key is being used in the browser. " +
     "For production, move API calls to a backend service to protect your key."
